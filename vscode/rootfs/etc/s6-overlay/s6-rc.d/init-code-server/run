@@ -52,6 +52,10 @@ while read -r ext; do
     rm -f -r /data/vscode/extensions/${extension,,}*
 done < /root/vscode.extensions
 
+# Remove the superseded Home Assistant extension, replaced by
+# blown.vscode-ha-config. Running both gives duplicate diagnostics.
+rm -f -r /data/vscode/extensions/keesschollaart.vscode-home-assistant*
+
 # Ensure user extensions folder exists
 mkdir -p /data/vscode/extensions
 
@@ -67,4 +71,58 @@ fi
 current=$(sha512sum /data/vscode/User/settings.json|cut -d " " -f 1)
 if [[ " ${PREVIOUS_DEFAULT_CONFIG_HASHES[*]} " == *" ${current} "* ]]; then
     cp /root/.code-server/settings.json /data/vscode/User/settings.json
+fi
+
+# Migrate settings and keybindings of keesschollaart.vscode-home-assistant
+# to blown.vscode-ha-config. Every setting and command kept its name; only the
+# prefix changed. The files are JSONC, so they are edited as text to keep
+# comments and formatting. A one-time backup is kept next to each file.
+readonly OLD_HA_PREFIX='vscode-home-assistant'
+readonly NEW_HA_PREFIX='vscode-ha-config'
+
+backup_before_ha_migration() {
+    local file="${1}"
+    if ! bashio::fs.file_exists "${file}.${OLD_HA_PREFIX}.bak"; then
+        cp "${file}" "${file}.${OLD_HA_PREFIX}.bak"
+    fi
+}
+
+settings_file='/data/vscode/User/settings.json'
+if grep -q "\"${OLD_HA_PREFIX}\." "${settings_file}"; then
+    backup_before_ha_migration "${settings_file}"
+    while read -r old_key; do
+        new_key="${NEW_HA_PREFIX}.${old_key#"${OLD_HA_PREFIX}."}"
+        # Never create a duplicate key; the new one wins if both are present.
+        if grep -qF "\"${new_key}\"" "${settings_file}"; then
+            bashio::log.warning \
+                "Setting ${old_key} not migrated: ${new_key} is already set." \
+                "Remove ${old_key} from your settings.json."
+            continue
+        fi
+        sed -i "s/\"${old_key//./\\.}\"/\"${new_key}\"/g" "${settings_file}"
+        bashio::log.info "Migrated setting ${old_key} to ${new_key}"
+    done < <(
+        grep -oE "\"${OLD_HA_PREFIX}\.[A-Za-z0-9_]+\"" "${settings_file}" \
+            | tr -d '"' | sort -u
+    )
+fi
+
+# Keybindings: rename commands (including "-command" removals) and any
+# "config.vscode-home-assistant.*" references in when clauses.
+keybindings_file='/data/vscode/User/keybindings.json'
+if bashio::fs.file_exists "${keybindings_file}" \
+    && grep -q "${OLD_HA_PREFIX}\." "${keybindings_file}"; then
+    backup_before_ha_migration "${keybindings_file}"
+    sed -i "s/${OLD_HA_PREFIX}\./${NEW_HA_PREFIX}./g" "${keybindings_file}"
+    bashio::log.info "Migrated Home Assistant commands in keybindings.json"
+fi
+
+# Workspace settings live in the user's config (often under version control),
+# so only point them out.
+workspace_settings="${config_path:-/config}/.vscode/settings.json"
+if bashio::fs.file_exists "${workspace_settings}" \
+    && grep -q "\"${OLD_HA_PREFIX}\." "${workspace_settings}"; then
+    bashio::log.warning \
+        "${workspace_settings} still uses ${OLD_HA_PREFIX}.* settings." \
+        "Rename them to ${NEW_HA_PREFIX}.* for the Home Assistant extension."
 fi

@@ -32,8 +32,8 @@ RUN \
         colordiff=1.0.21-1 \
         git=1:2.47.3-0+deb13u1 \
         iputils-ping=3:20240905-3 \
-        locales=2.41-12+deb13u4 \
-        mariadb-client=1:11.8.6-0+deb13u1 \
+        locales=2.41-12+deb13u5 \
+        mariadb-client=1:11.8.9+ds-0+deb13u1 \
         mosquitto-clients=2.0.21-1 \
         net-tools=2.10-1.3 \
         nmap=7.95+dfsg-3 \
@@ -46,7 +46,7 @@ RUN \
         uuid-runtime=2.41.5-0+deb13u1 \
         wget=1.25.0-2 \
         zip=3.0-15+deb13u1 \
-        zsh=5.9-8+b24 \
+        zsh=5.9-8+b25 \
         less=668-1 \
     \
     && sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen \

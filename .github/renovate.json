@@ -74,11 +74,9 @@
     {
       "customType": "regex",
       "managerFilePatterns": ["/vscode/vscode.extensions$/"],
-      "matchStrings": [
-        "keesschollaart\\.vscode-home-assistant#(?<currentValue>.+)\\s"
-      ],
+      "matchStrings": ["blown\\.vscode-ha-config#(?<currentValue>.+)\\s"],
       "datasourceTemplate": "github-releases",
-      "depNameTemplate": "keesschollaart81/vscode-home-assistant",
+      "depNameTemplate": "jlusky/vscode-ha-config",
       "extractVersionTemplate": "^v(?<version>.*)$"
     },
     {
