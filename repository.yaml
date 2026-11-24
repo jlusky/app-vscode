@@ -1,0 +1,7 @@
+---
+# Test-only add-on repository for this fork. Do not merge upstream.
+# Add in Home Assistant as:
+#   https://github.com/jlusky/app-vscode#test-repository
+name: jlusky app-vscode (test)
+url: https://github.com/jlusky/app-vscode
+maintainer: Jon Lusky
